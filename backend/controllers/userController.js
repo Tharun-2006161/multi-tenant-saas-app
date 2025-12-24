@@ -23,10 +23,11 @@ const createUser = async (req, res) => {
 
         // 2. Create the User linked to that Tenant
         const salt = await bcrypt.genSalt(10);
+        // Note: We use password_hash to match your database schema
         const securePassword = await bcrypt.hash(password, salt);
         
         const newUser = await pool.query(
-            "INSERT INTO users (full_name, email, tenant_id, password_hash) VALUES($1, $2, $3, $4) RETURNING *",
+            "INSERT INTO users (full_name, email, tenant_id, password_hash) VALUES($1, $2, $3, $4) RETURNING id, full_name, email, tenant_id",
             [full_name, email, tenant_id, securePassword]
         );
 
@@ -37,43 +38,31 @@ const createUser = async (req, res) => {
     }
 };
 
-// LOGIN USER
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
-
         const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-        if (user.rows.length === 0) {
-            return res.status(401).json({ error: "Invalid Credentials" });
-        }
 
-        const isMatch = await bcrypt.compare(password, user.rows[0].password_hash);
-        if (!isMatch) {
-            return res.status(401).json({ error: "Invalid Credentials" });
-        }
+        if (user.rows.length === 0) return res.status(401).json({ error: "Invalid Credentials" });
 
-        const secret = process.env.JWT_SECRET;
-        if (!secret) {
-            console.error("JWT_SECRET is missing from .env file!");
-            return res.status(500).send("Server Configuration Error");
-        }
+        const foundUser = user.rows[0];
+        const isMatch = await bcrypt.compare(password, foundUser.password_hash);
+        if (!isMatch) return res.status(401).json({ error: "Invalid Credentials" });
 
-        // UPDATED: Token now includes full_name for the Frontend to display
+        // THIS IS THE KEY: We must include tenant_id in the token
         const token = jwt.sign(
             { 
-                id: user.rows[0].id, 
-                tenant_id: user.rows[0].tenant_id,
-                full_name: user.rows[0].full_name // Added this line
-            },
-            secret,
-            { expiresIn: "1h" }
+                id: foundUser.id, 
+                tenant_id: foundUser.tenant_id, // Make sure this is NOT null
+                full_name: foundUser.full_name 
+            }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '1h' }
         );
 
         res.json({ token });
     } catch (err) {
-        console.error(err.message);
         res.status(500).send("Server Error");
     }
 };
-
 module.exports = { createUser, loginUser };
