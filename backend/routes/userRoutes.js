@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { createUser } = require('../controllers/userController');
+const { createUser, loginUser } = require('../controllers/userController');
 
-// This defines the POST request to create a user
+// http://localhost:5000/api/users/register
 router.post('/register', createUser);
+
+// http://localhost:5000/api/users/login
+router.post('/login', loginUser);
 
 module.exports = router;
