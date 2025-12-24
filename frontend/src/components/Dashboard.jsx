@@ -17,7 +17,6 @@ const Dashboard = () => {
       const response = await axios.get('http://localhost:5000/api/projects', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log("Data received from server:", response.data);
       setProjects(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error("Fetch error", err);
@@ -46,6 +45,14 @@ const Dashboard = () => {
     project.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // LOGIC: Calculate dashboard statistics
+  const totalProjects = projects.length;
+  const recentProjects = projects.filter(p => {
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    return new Date(p.created_at || Date.now()) > oneDayAgo;
+  }).length;
+
   const handleCreateProject = async (e) => {
     e.preventDefault();
     try {
@@ -55,15 +62,12 @@ const Dashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // UPDATED: Use the response data to update UI instantly (Optimistic Update)
-      // This ensures the new card appears without waiting for fetchProjects()
       const newProject = response.data;
       setProjects((prev) => [...prev, newProject]);
 
       setProjectName(''); 
       setDescription('');
     } catch (err) {
-      console.error("Create error:", err.response?.data);
       alert("Error: " + (err.response?.data?.error || "Server issue"));
     }
   };
@@ -75,7 +79,6 @@ const Dashboard = () => {
         await axios.delete(`http://localhost:5000/api/projects/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        // Update local state to remove the card instantly
         setProjects((prev) => prev.filter(p => p.id !== id));
       } catch (err) { alert("Delete failed"); }
     }
@@ -98,10 +101,23 @@ const Dashboard = () => {
         </div>
       </nav>
 
-      <div style={{ maxWidth: '1000px', margin: '40px auto', padding: '0 20px' }}>
+      {/* DASHBOARD CONTENT */}
+      <div style={{ maxWidth: '1000px', margin: '30px auto', padding: '0 20px' }}>
         
+        {/* STATS ROW */}
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
+          <div style={{ flex: 1, backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', borderLeft: '6px solid #1a73e8' }}>
+            <p style={{ margin: 0, color: '#5f6368', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>Total Projects</p>
+            <h2 style={{ margin: '5px 0 0 0', color: '#333' }}>{totalProjects}</h2>
+          </div>
+          <div style={{ flex: 1, backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', borderLeft: '6px solid #34a853' }}>
+            <p style={{ margin: 0, color: '#5f6368', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>Recent (24h)</p>
+            <h2 style={{ margin: '5px 0 0 0', color: '#333' }}>{recentProjects}</h2>
+          </div>
+        </div>
+
         {/* CREATE SECTION */}
-        <section style={{ backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '20px' }}>
+        <section style={{ backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
           <h3 style={{ marginTop: 0, color: '#333' }}>New Project</h3>
           <form onSubmit={handleCreateProject} style={{ display: 'flex', gap: '15px' }}>
             <input placeholder="Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} required style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} />
@@ -110,27 +126,14 @@ const Dashboard = () => {
           </form>
         </section>
 
-        {/* SEARCH & COUNTER SECTION */}
+        {/* SEARCH BAR */}
         <div style={{ marginBottom: '30px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-             <span style={{ color: '#5f6368', fontSize: '14px' }}>
-                Showing <strong>{filteredProjects.length}</strong> {filteredProjects.length === 1 ? 'project' : 'projects'}
-             </span>
-          </div>
           <input 
             type="text"
-            placeholder="🔍 Search projects by name or description..."
+            placeholder="🔍 Search projects..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '15px',
-              borderRadius: '10px',
-              border: '1px solid #ccc',
-              fontSize: '16px',
-              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-              boxSizing: 'border-box'
-            }}
+            style={{ width: '100%', padding: '15px', borderRadius: '10px', border: '1px solid #ccc', fontSize: '16px', boxSizing: 'border-box' }}
           />
         </div>
 
@@ -147,9 +150,7 @@ const Dashboard = () => {
               </div>
             ))
           ) : (
-            <p style={{ textAlign: 'center', gridColumn: '1 / -1', color: '#888', padding: '40px' }}>
-              {searchTerm ? "No projects match your search." : "No projects found. Create your first one!"}
-            </p>
+            <p style={{ textAlign: 'center', gridColumn: '1 / -1', color: '#888', padding: '40px' }}>No projects found.</p>
           )}
         </div>
       </div>
