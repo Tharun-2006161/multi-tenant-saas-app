@@ -9,10 +9,12 @@ const Dashboard = () => {
   const [description, setDescription] = useState('');
   const [userName, setUserName] = useState('User');
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const fetchProjects = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
       const response = await axios.get('http://localhost:5000/api/projects', {
         headers: { Authorization: `Bearer ${token}` }
@@ -20,6 +22,8 @@ const Dashboard = () => {
       setProjects(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error("Fetch error", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,7 +49,6 @@ const Dashboard = () => {
     project.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // LOGIC: Calculate dashboard statistics
   const totalProjects = projects.length;
   const recentProjects = projects.filter(p => {
     const oneDayAgo = new Date();
@@ -55,16 +58,16 @@ const Dashboard = () => {
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
+    // Extra safety check before sending to API
+    if (!projectName.trim() || !description.trim()) return;
+
     try {
       const token = localStorage.getItem('token');
       const response = await axios.post('http://localhost:5000/api/projects', 
         { name: projectName, description }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      const newProject = response.data;
-      setProjects((prev) => [...prev, newProject]);
-
+      setProjects((prev) => [...prev, response.data]);
       setProjectName(''); 
       setDescription('');
     } catch (err) {
@@ -89,6 +92,9 @@ const Dashboard = () => {
     navigate('/login');
   };
 
+  // Validation Check: Button is only enabled if fields aren't empty
+  const isFormInvalid = !projectName.trim() || !description.trim();
+
   return (
     <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', fontFamily: 'Segoe UI, sans-serif' }}>
       
@@ -101,7 +107,6 @@ const Dashboard = () => {
         </div>
       </nav>
 
-      {/* DASHBOARD CONTENT */}
       <div style={{ maxWidth: '1000px', margin: '30px auto', padding: '0 20px' }}>
         
         {/* STATS ROW */}
@@ -120,9 +125,36 @@ const Dashboard = () => {
         <section style={{ backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
           <h3 style={{ marginTop: 0, color: '#333' }}>New Project</h3>
           <form onSubmit={handleCreateProject} style={{ display: 'flex', gap: '15px' }}>
-            <input placeholder="Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} required style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} />
-            <input placeholder="Details" value={description} onChange={(e) => setDescription(e.target.value)} required style={{ flex: 2, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} />
-            <button type="submit" style={{ backgroundColor: '#1a73e8', color: 'white', border: 'none', padding: '10px 25px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Create</button>
+            <input 
+              placeholder="Project Name" 
+              value={projectName} 
+              onChange={(e) => setProjectName(e.target.value)} 
+              required 
+              style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} 
+            />
+            <input 
+              placeholder="Details" 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              required 
+              style={{ flex: 2, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} 
+            />
+            <button 
+              type="submit" 
+              disabled={isFormInvalid}
+              style={{ 
+                backgroundColor: isFormInvalid ? '#ccc' : '#1a73e8', 
+                color: 'white', 
+                border: 'none', 
+                padding: '10px 25px', 
+                borderRadius: '6px', 
+                fontWeight: 'bold', 
+                cursor: isFormInvalid ? 'not-allowed' : 'pointer',
+                transition: 'background-color 0.3s ease'
+              }}
+            >
+              Create
+            </button>
           </form>
         </section>
 
@@ -139,7 +171,20 @@ const Dashboard = () => {
 
         {/* PROJECTS GRID */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-          {filteredProjects.length > 0 ? (
+          {loading ? (
+            <div style={{ textAlign: 'center', gridColumn: '1 / -1', padding: '40px' }}>
+              <div style={{ 
+                border: '4px solid #f3f3f3', 
+                borderTop: '4px solid #1a73e8', 
+                borderRadius: '50%', 
+                width: '40px', 
+                height: '40px', 
+                animation: 'spin 1s linear infinite',
+                margin: '0 auto 10px'
+              }}></div>
+              <p style={{ color: '#5f6368' }}>Loading projects...</p>
+            </div>
+          ) : filteredProjects.length > 0 ? (
             filteredProjects.map(p => (
               <div key={p.id} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #eee' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -154,6 +199,13 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+      
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
