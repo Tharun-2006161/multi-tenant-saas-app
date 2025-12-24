@@ -1,12 +1,13 @@
 const pool = require('../config/db');
 
-// Create a new user
 const createUser = async (req, res) => {
     try {
-        const { username, email, tenant_id } = req.body;
+        // Added password_hash here
+        const { full_name, email, tenant_id, password_hash } = req.body; 
+        
         const newUser = await pool.query(
-            "INSERT INTO users (username, email, tenant_id) VALUES($1, $2, $3) RETURNING *",
-            [username, email, tenant_id]
+            "INSERT INTO users (full_name, email, tenant_id, password_hash) VALUES($1, $2, $3, $4) RETURNING *",
+            [full_name, email, tenant_id, password_hash]
         );
         res.json(newUser.rows[0]);
     } catch (err) {
