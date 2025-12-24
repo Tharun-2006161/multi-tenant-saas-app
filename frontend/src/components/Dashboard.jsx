@@ -24,13 +24,30 @@ const Dashboard = () => {
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
+    console.log("1. Create button clicked. Name:", name); 
+
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/projects', { name, description }, 
-        { headers: { Authorization: `Bearer ${token}` } });
-      setName(''); setDescription('');
-      fetchProjects();
-    } catch (err) { alert("Error creating project"); }
+      console.log("2. Token found:", token ? "Yes" : "No");
+
+      const response = await axios.post('http://localhost:5000/api/projects', 
+        { name, description }, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("3. Backend Success Response:", response.data);
+
+      setName(''); 
+      setDescription('');
+      
+      console.log("4. Fetching updated list...");
+      fetchProjects(); 
+
+    } catch (err) {
+      // THIS WILL TELL US THE REAL PROBLEM
+      console.error("CRITICAL ERROR:", err.response?.data || err.message);
+      alert("Error: " + (err.response?.data?.error || "Server issue"));
+    }
   };
 
   const handleDelete = async (id) => {
