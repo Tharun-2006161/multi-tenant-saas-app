@@ -1,8 +1,8 @@
 const express = require('express');
+const cors = require('cors'); // 1. IMPORT CORS
 const dotenv = require('dotenv');
 const pool = require('./config/db');
 const userRoutes = require('./routes/userRoutes'); 
-// 1. ADD THIS LINE:
 const projectRoutes = require('./routes/projectRoutes'); 
 
 dotenv.config();
@@ -11,11 +11,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+app.use(cors()); // 2. USE CORS (Must be before your routes!)
 app.use(express.json());
 
 // Routes
 app.use('/api/users', userRoutes); 
-// 2. ADD THIS LINE:
 app.use('/api/projects', projectRoutes); 
 
 // Test Database Connection
