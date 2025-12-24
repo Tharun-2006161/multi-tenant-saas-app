@@ -16,7 +16,6 @@ const createUser = async (req, res) => {
         const subdomain = full_name.toLowerCase().replace(/\s+/g, '-'); 
 
         // 1. Create the Tenant with ALL required constraints 
-        // Including max_users and the new max_projects
         await pool.query(
             "INSERT INTO tenants (id, name, subdomain, max_users, max_projects) VALUES ($1, $2, $3, $4, $5)",
             [tenant_id, `${full_name}'s Organization`, subdomain, 5, 10] 
@@ -37,6 +36,7 @@ const createUser = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 // LOGIN USER
 const loginUser = async (req, res) => {
     try {
@@ -58,9 +58,13 @@ const loginUser = async (req, res) => {
             return res.status(500).send("Server Configuration Error");
         }
 
-        // Token now correctly includes the generated tenant_id
+        // UPDATED: Token now includes full_name for the Frontend to display
         const token = jwt.sign(
-            { id: user.rows[0].id, tenant_id: user.rows[0].tenant_id },
+            { 
+                id: user.rows[0].id, 
+                tenant_id: user.rows[0].tenant_id,
+                full_name: user.rows[0].full_name // Added this line
+            },
             secret,
             { expiresIn: "1h" }
         );

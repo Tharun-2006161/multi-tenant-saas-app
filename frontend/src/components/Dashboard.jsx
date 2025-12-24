@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const [projects, setProjects] = useState([]);
-  const [name, setName] = useState('');
+  const [projectName, setProjectName] = useState(''); // Renamed to avoid conflict with userName
   const [description, setDescription] = useState('');
+  const [userName, setUserName] = useState('User'); // State for personalized greeting
   const navigate = useNavigate();
 
   const fetchProjects = async () => {
@@ -20,31 +22,37 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => { fetchProjects(); }, []);
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+    } else {
+      try {
+        // Decode token to get the full_name we added in the backend
+        const decoded = jwtDecode(token);
+        setUserName(decoded.full_name || "User");
+      } catch (error) {
+        console.error("Token decode error", error);
+        localStorage.removeItem('token');
+        navigate('/login');
+      }
+      fetchProjects();
+    }
+  }, [navigate]);
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
-    console.log("1. Create button clicked. Name:", name); 
-
     try {
       const token = localStorage.getItem('token');
-      console.log("2. Token found:", token ? "Yes" : "No");
-
       const response = await axios.post('http://localhost:5000/api/projects', 
-        { name, description }, 
+        { name: projectName, description }, 
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("3. Backend Success Response:", response.data);
-
-      setName(''); 
+      setProjectName(''); 
       setDescription('');
-      
-      console.log("4. Fetching updated list...");
       fetchProjects(); 
-
     } catch (err) {
-      // THIS WILL TELL US THE REAL PROBLEM
       console.error("CRITICAL ERROR:", err.response?.data || err.message);
       alert("Error: " + (err.response?.data?.error || "Server issue"));
     }
@@ -62,12 +70,43 @@ const Dashboard = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
   return (
     <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
-      {/* HEADER BAR */}
-      <nav style={{ backgroundColor: '#1a73e8', color: 'white', padding: '15px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+      
+      {/* HEADER BAR WITH PERSONALIZATION */}
+      <nav style={{ 
+        backgroundColor: '#1a73e8', 
+        color: 'white', 
+        padding: '15px 30px', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+      }}>
         <h2 style={{ margin: 0 }}>SaaS Pro Dashboard</h2>
-        <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} style={{ backgroundColor: 'transparent', border: '1px solid white', color: 'white', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer' }}>Logout</button>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <span style={{ fontSize: '1rem' }}>Welcome, <strong>{userName}</strong></span>
+          <button 
+            onClick={handleLogout} 
+            style={{ 
+              backgroundColor: 'white', 
+              border: 'none', 
+              color: '#1a73e8', 
+              padding: '8px 15px', 
+              borderRadius: '5px', 
+              cursor: 'pointer',
+              fontWeight: 'bold' 
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </nav>
 
       <div style={{ maxWidth: '1000px', margin: '40px auto', padding: '0 20px' }}>
@@ -76,23 +115,39 @@ const Dashboard = () => {
         <section style={{ backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
           <h3 style={{ marginTop: 0, color: '#333' }}>New Project</h3>
           <form onSubmit={handleCreateProject} style={{ display: 'flex', gap: '15px' }}>
-            <input placeholder="Project Name" value={name} onChange={(e) => setName(e.target.value)} required style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} />
-            <input placeholder="Details" value={description} onChange={(e) => setDescription(e.target.value)} required style={{ flex: 2, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} />
+            <input 
+              placeholder="Project Name" 
+              value={projectName} 
+              onChange={(e) => setProjectName(e.target.value)} 
+              required 
+              style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} 
+            />
+            <input 
+              placeholder="Details" 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              required 
+              style={{ flex: 2, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} 
+            />
             <button type="submit" style={{ backgroundColor: '#1a73e8', color: 'white', border: 'none', padding: '10px 25px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Create</button>
           </form>
         </section>
 
         {/* PROJECTS GRID */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-          {projects.map(p => (
-            <div key={p.id} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #eee', transition: 'transform 0.2s' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <h4 style={{ margin: '0 0 10px 0', color: '#1a73e8' }}>{p.name}</h4>
-                <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', fontWeight: 'bold' }}>&times;</button>
+          {projects.length > 0 ? (
+            projects.map(p => (
+              <div key={p.id} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #eee' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <h4 style={{ margin: '0 0 10px 0', color: '#1a73e8' }}>{p.name}</h4>
+                  <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
+                </div>
+                <p style={{ color: '#5f6368', fontSize: '14px', lineHeight: '1.5' }}>{p.description}</p>
               </div>
-              <p style={{ color: '#5f6368', fontSize: '14px', lineHeight: '1.5' }}>{p.description}</p>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p style={{ textAlign: 'center', gridColumn: '1 / -1', color: '#888' }}>No projects found. Create your first one!</p>
+          )}
         </div>
       </div>
     </div>
