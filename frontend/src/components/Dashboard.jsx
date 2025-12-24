@@ -20,78 +20,63 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  useEffect(() => { fetchProjects(); }, []);
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/projects', 
-        { name, description }, 
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setName('');
-      setDescription('');
+      await axios.post('http://localhost:5000/api/projects', { name, description }, 
+        { headers: { Authorization: `Bearer ${token}` } });
+      setName(''); setDescription('');
       fetchProjects();
-    } catch (err) {
-      alert("Error creating project");
-    }
+    } catch (err) { alert("Error creating project"); }
   };
 
-  // --- NEW DELETE FUNCTION ---
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this project?")) {
+    if (window.confirm("Delete this project?")) {
       try {
         const token = localStorage.getItem('token');
         await axios.delete(`http://localhost:5000/api/projects/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        fetchProjects(); // Refresh the list
-      } catch (err) {
-        alert("Delete failed");
-      }
+        fetchProjects();
+      } catch (err) { alert("Delete failed"); }
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
-
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h2>Project Dashboard</h2>
-        <button onClick={handleLogout} style={{ backgroundColor: '#555', color: 'white', border: 'none', padding: '10px', borderRadius: '5px' }}>Logout</button>
-      </div>
+    <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' }}>
+      {/* HEADER BAR */}
+      <nav style={{ backgroundColor: '#1a73e8', color: 'white', padding: '15px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+        <h2 style={{ margin: 0 }}>SaaS Pro Dashboard</h2>
+        <button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} style={{ backgroundColor: 'transparent', border: '1px solid white', color: 'white', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer' }}>Logout</button>
+      </nav>
 
-      <div style={{ margin: '20px 0', padding: '15px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#f4f4f4' }}>
-        <h3>Create New Project</h3>
-        <form onSubmit={handleCreateProject}>
-          <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required style={{ marginRight: '10px' }} />
-          <input placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required style={{ marginRight: '10px' }} />
-          <button type="submit" style={{ backgroundColor: '#28a745', color: 'white', border: 'none', padding: '5px 15px', borderRadius: '4px' }}>Add Project</button>
-        </form>
-      </div>
+      <div style={{ maxWidth: '1000px', margin: '40px auto', padding: '0 20px' }}>
+        
+        {/* CREATE SECTION */}
+        <section style={{ backgroundColor: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '30px' }}>
+          <h3 style={{ marginTop: 0, color: '#333' }}>New Project</h3>
+          <form onSubmit={handleCreateProject} style={{ display: 'flex', gap: '15px' }}>
+            <input placeholder="Project Name" value={name} onChange={(e) => setName(e.target.value)} required style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} />
+            <input placeholder="Details" value={description} onChange={(e) => setDescription(e.target.value)} required style={{ flex: 2, padding: '12px', borderRadius: '6px', border: '1px solid #ddd' }} />
+            <button type="submit" style={{ backgroundColor: '#1a73e8', color: 'white', border: 'none', padding: '10px 25px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Create</button>
+          </form>
+        </section>
 
-      <hr />
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '15px' }}>
-        {projects.map(p => (
-          <div key={p.id} style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '10px', backgroundColor: 'white', position: 'relative' }}>
-            <h4>{p.name}</h4>
-            <p style={{ color: '#666' }}>{p.description}</p>
-            {/* DELETE BUTTON */}
-            <button 
-              onClick={() => handleDelete(p.id)} 
-              style={{ backgroundColor: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}
-            >
-              Delete
-            </button>
-          </div>
-        ))}
+        {/* PROJECTS GRID */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+          {projects.map(p => (
+            <div key={p.id} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #eee', transition: 'transform 0.2s' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#1a73e8' }}>{p.name}</h4>
+                <button onClick={() => handleDelete(p.id)} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', fontWeight: 'bold' }}>&times;</button>
+              </div>
+              <p style={{ color: '#5f6368', fontSize: '14px', lineHeight: '1.5' }}>{p.description}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
