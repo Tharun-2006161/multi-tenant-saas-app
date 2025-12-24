@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import toast, { Toaster } from 'react-hot-toast'; // NEW: Toast notifications
 
 const Dashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -22,6 +23,7 @@ const Dashboard = () => {
       setProjects(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error("Fetch error", err);
+      toast.error("Could not load projects");
     } finally {
       setLoading(false);
     }
@@ -58,7 +60,6 @@ const Dashboard = () => {
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
-    // Extra safety check before sending to API
     if (!projectName.trim() || !description.trim()) return;
 
     try {
@@ -70,8 +71,9 @@ const Dashboard = () => {
       setProjects((prev) => [...prev, response.data]);
       setProjectName(''); 
       setDescription('');
+      toast.success('Project created successfully!'); // NEW: Success toast
     } catch (err) {
-      alert("Error: " + (err.response?.data?.error || "Server issue"));
+      toast.error('Failed to create project');
     }
   };
 
@@ -83,20 +85,25 @@ const Dashboard = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         setProjects((prev) => prev.filter(p => p.id !== id));
-      } catch (err) { alert("Delete failed"); }
+        toast.success('Project deleted'); // NEW: Success toast
+      } catch (err) { 
+        toast.error('Delete failed'); 
+      }
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    toast('Logged out safely', { icon: '👋' });
     navigate('/login');
   };
 
-  // Validation Check: Button is only enabled if fields aren't empty
   const isFormInvalid = !projectName.trim() || !description.trim();
 
   return (
     <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', fontFamily: 'Segoe UI, sans-serif' }}>
+      {/* NEW: Toast Container */}
+      <Toaster position="top-right" reverseOrder={false} />
       
       {/* HEADER BAR */}
       <nav style={{ backgroundColor: '#1a73e8', color: 'white', padding: '15px 30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
