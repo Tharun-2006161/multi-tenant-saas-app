@@ -1,0 +1,52 @@
+
+
+services:
+  # MANDATORY: Database service named "database"
+  database:
+    image: postgres:15
+    container_name: database
+    environment:
+      POSTGRES_DB: saas_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432" # Fixed port mapping
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MANDATORY: Backend service named "backend"
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "5000:5000" # Fixed port mapping
+    environment:
+      DB_HOST: database # Uses service name for communication
+      DB_PORT: 5432
+      DB_NAME: saas_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: your_jwt_secret_key_min_32_chars # Match your .env
+      FRONTEND_URL: http://frontend:3000
+    depends_on:
+      database:
+        condition: service_healthy
+
+  # MANDATORY: Frontend service named "frontend"
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000" # Fixed port mapping
+    environment:
+      REACT_APP_API_URL: http://backend:5000/api
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
