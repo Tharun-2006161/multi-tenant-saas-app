@@ -1,3 +1,4 @@
+import React from "react"; // Add this to the very top line
 // 1. Updated Fetch Projects
 const fetchProjects = async () => {
   try {

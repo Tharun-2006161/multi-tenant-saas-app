@@ -2,7 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./components/Dashboard.jsx"; // Add the .jsx extension explicitly
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Define styles OUTSIDE the component to prevent re-renders
