@@ -4,6 +4,24 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import Dashboard from "./components/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+
+// Define styles OUTSIDE the component to prevent re-renders
+const styles = {
+  app: {
+    fontFamily: "Arial, sans-serif",
+    margin: 0,
+    padding: 0,
+  },
+  home: {
+    padding: "40px",
+    textAlign: "center",
+  },
+  links: {
+    marginTop: "20px",
+    fontSize: "16px",
+  },
+};
+
 const App = () => {
   return (
     <Router>
@@ -45,21 +63,3 @@ const App = () => {
 };
 
 export default App;
-
-// ================= Styles =================
-
-const styles = {
-  app: {
-    fontFamily: "Arial, sans-serif",
-    margin: 0,
-    padding: 0,
-  },
-  home: {
-    padding: "40px",
-    textAlign: "center",
-  },
-  links: {
-    marginTop: "20px",
-    fontSize: "16px",
-  },
-};
