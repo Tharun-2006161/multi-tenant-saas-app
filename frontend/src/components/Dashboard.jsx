@@ -54,3 +54,4 @@ const handleDelete = async (id) => {
     toast.error('Delete failed - try refreshing', { id: deleteToast }); 
   }
 };
+export default Dashboard;
