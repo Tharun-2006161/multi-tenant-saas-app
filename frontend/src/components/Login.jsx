@@ -28,10 +28,11 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // FIXED: Removed localhost:5000
       const response = await axios.post(
-        "http://localhost:5000/api/users/login",
-        { email, password }
-      );
+      `${import.meta.env.VITE_API_URL}/api/users/login`,
+      { email, password }
+);
 
       // Save token to localStorage
       localStorage.setItem("token", response.data.token);
