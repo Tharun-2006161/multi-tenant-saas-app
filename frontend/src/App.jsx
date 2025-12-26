@@ -2,60 +2,38 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Login from "./components/Login";
 import Register from "./components/Register";
-import Dashboard from "./components/Dashboard.jsx"; // Add the .jsx extension explicitly
+// Remove the .jsx extension to let Vite handle it naturally
+import Dashboard from "./components/Dashboard"; 
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Define styles OUTSIDE the component to prevent re-renders
 const styles = {
-  app: {
-    fontFamily: "Arial, sans-serif",
-    margin: 0,
-    padding: 0,
-  },
-  home: {
-    padding: "40px",
-    textAlign: "center",
-  },
-  links: {
-    marginTop: "20px",
-    fontSize: "16px",
-  },
+  app: { fontFamily: "Arial, sans-serif", margin: 0, padding: 0 },
+  home: { padding: "40px", textAlign: "center" },
+  links: { marginTop: "20px", fontSize: "16px" },
 };
 
 const App = () => {
+  // HERO TEST: This will tell us if the variable exists in the browser console
+  console.log("Checking Dashboard import:", Dashboard);
+
   return (
     <Router>
       <div style={styles.app}>
         <Routes>
-          {/* Home Route */}
-          <Route
-            path="/"
-            element={
+          <Route path="/" element={
               <div style={styles.home}>
                 <h2>Home Page</h2>
-                <p>Welcome to the Application</p>
                 <div style={styles.links}>
-                  <Link to="/login">Login</Link>
-                  <span> | </span>
-                  <Link to="/register">Register</Link>
+                  <Link to="/login">Login</Link> | <Link to="/register">Register</Link>
                 </div>
               </div>
-            }
-          />
+          } />
 
-          {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected Route */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
+          {/* TEMPORARY HERO TEST: Remove ProtectedRoute just to see if Dashboard loads */}
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </div>
     </Router>
