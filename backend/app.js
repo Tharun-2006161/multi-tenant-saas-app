@@ -8,7 +8,10 @@ dotenv.config();
 const app = express();
 
 // --- ADD THESE TWO LINES HERE ---
-app.use(cors());          // Allows frontend to talk to backend
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Updated for your Vite port
+  credentials: true
+}));         // Allows frontend to talk to backend
 app.use(express.json());  // CRITICAL: This fixes the "undefined" error
 // --------------------------------
 

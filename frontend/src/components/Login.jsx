@@ -1,51 +1,85 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // 1. Import the navigator
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const navigate = useNavigate(); // 2. Initialize the navigator
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const { email, password } = formData;
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+
     try {
-      const response = await axios.post('http://localhost:5000/api/users/login', {
-        email,
-        password
-      });
-      
-      localStorage.setItem('token', response.data.token);
-      
-      // 3. Instead of just an alert, we now DRIVE the user to the dashboard
-      alert('Login Successful!');
-      navigate('/dashboard'); 
-      
+      const response = await axios.post(
+        "http://localhost:5000/api/users/login",
+        { email, password }
+      );
+
+      // Save token to localStorage
+      localStorage.setItem("token", response.data.token);
+
+      // Redirect to dashboard
+      navigate("/dashboard");
     } catch (err) {
-      alert('Login Failed: ' + (err.response?.data?.error || 'Server Error'));
+      setError(
+        err.response?.data?.error || "Login failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '300px', margin: '50px auto', textAlign: 'center' }}>
-      <h2>Login</h2>
+    <div style={styles.container}>
+      <h2 style={styles.heading}>Login</h2>
+
+      {error && <p style={styles.error}>{error}</p>}
+
       <form onSubmit={handleLogin}>
-        <input 
-          type="email" 
-          placeholder="Email" 
-          value={email} 
-          onChange={(e) => setEmail(e.target.value)} 
-          style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '8px' }}
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={email}
+          onChange={handleChange}
+          required
+          style={styles.input}
         />
-        <input 
-          type="password" 
-          placeholder="Password" 
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)} 
-          style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '8px' }}
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={password}
+          onChange={handleChange}
+          required
+          style={styles.input}
         />
-        <button type="submit" style={{ width: '100%', padding: '10px', cursor: 'pointer' }}>
-          Login
+
+        <button
+          type="submit"
+          style={styles.button}
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </div>
@@ -53,3 +87,44 @@ const Login = () => {
 };
 
 export default Login;
+
+// ================== Styles ==================
+
+const styles = {
+  container: {
+    maxWidth: "360px",
+    margin: "80px auto",
+    padding: "30px",
+    borderRadius: "8px",
+    backgroundColor: "#ffffff",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+    textAlign: "center",
+  },
+  heading: {
+    marginBottom: "20px",
+    color: "#333",
+  },
+  input: {
+    width: "100%",
+    padding: "10px",
+    marginBottom: "15px",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
+    fontSize: "14px",
+  },
+  button: {
+    width: "100%",
+    padding: "10px",
+    backgroundColor: "#007bff",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    fontSize: "16px",
+    cursor: "pointer",
+  },
+  error: {
+    color: "red",
+    fontSize: "14px",
+    marginBottom: "10px",
+  },
+};
